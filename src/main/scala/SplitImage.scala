@@ -3,7 +3,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
 
-object SplitImage extends App with NetworkConstants {
+object SplitImage extends App {
+  import NetworkConstants._
   implicit def withSafeFiles(f: File) = new {
     def listFilesSafe: Seq[File] = for {
       children <- Option(f.listFiles()).toSeq

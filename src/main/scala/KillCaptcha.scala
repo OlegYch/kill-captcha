@@ -9,8 +9,7 @@ import org.encog.util.obj.SerializeObject
  */
 
 object KillCaptcha {
-  val networkFile = new File("network")
-  def network = SerializeObject.load(networkFile).asInstanceOf[BasicNetwork]
+  def network = TrainNetwork.load
 
   case class CaptchaResult(result: String, confidence: Double)
 
@@ -18,7 +17,7 @@ object KillCaptcha {
     val captcha = ImageIO.read(ByteStreams.newInputStreamSupplier(bytes).getInput)
     println("size = " + bytes.size)
     val recognizedNumbers: Seq[(Double, Int)] = SplitImage.splitCaptcha(new ImageSplitter(captcha)).map(c =>
-      TrainNetwork.compute(TrainNetwork.readImageInput(c), network))
+      network.compute(network.readImageInput(c)))
     CaptchaResult(recognizedNumbers.map(_._2).mkString, recognizedNumbers.map(_._1).product)
   }
 

@@ -4,25 +4,34 @@ import java.lang.String
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import org.encog.ml.data.basic.BasicMLDataSet
+import org.encog.ml.data.MLDataSet
 import org.encog.ml.train.MLTrain
 import org.encog.neural.networks.BasicNetwork
 import org.encog.neural.networks.layers.BasicLayer
 import org.encog.neural.networks.training.propagation.resilient.ResilientPropagation
+import org.encog.neural.networks.training.propagation.TrainingContinuation
+import org.encog.util.obj.SerializeObject
 
-class TrainNetwork extends NetworkConstants {
-  val network: BasicNetwork = new BasicNetwork()
-  network.addLayer(new BasicLayer(inputDimensions))
-  network.addLayer(new BasicLayer(inputDimensions / 3))
-  network.addLayer(new BasicLayer(outputDimensions))
-  network.getStructure.finalizeStructure()
-  network.reset()
+class TrainNetwork(val network: BasicNetwork) {
+  def this(dim: Int = NetworkConstants.inputDimensions, outDim: Int = NetworkConstants.outputDimensions) {
+    this (new BasicNetwork() {
+      addLayer(new BasicLayer(dim))
+      addLayer(new BasicLayer(dim * 2))
+      addLayer(new BasicLayer(outDim))
+      getStructure.finalizeStructure()
+      reset()
+    })
+  }
+
+  lazy val inputDimensions = network.getLayerNeuronCount(0)
+  lazy val outputDimensions = network.getLayerNeuronCount(network.getLayerCount - 1)
 
   import SplitImage.withSafeFiles
 
-  def set: GenSeq[(File, String)] = util.Random.shuffle(new File(dataDir).listFilesSafe
+  def set: Seq[(File, String)] = new File(NetworkConstants.dataDir).listFilesSafe
     .filter(_.getName.length == 1).flatMap {
-    f => f.listFilesSafe.map(image => (image, f.getName)).take(1350)
-  }).par
+    f => f.listFilesSafe.map(image => (image, f.getName))
+  }
 
   def readImageInput(image: BufferedImage): Array[Double] = {
     image.getRGB(0, 0, image.getWidth, image.getHeight, newInputArray, 0, image.getWidth).map(_.toDouble.abs)
@@ -35,33 +44,42 @@ class TrainNetwork extends NetworkConstants {
     readImageInput(image)
   }
 
-  def ideal(set: GenSeq[(File, String)]): GenSeq[Array[Double]] = for {
-    sample <- set
-  } yield {
-    val answer = sample._2.toInt
+  def sampleToData(sample: String): Array[Double] = {
+    val answer = sample.toInt
     val output = newResultArray
     output(answer) = 1.0
     output
+  }
+
+  def ideal(set: GenSeq[(File, String)]): GenSeq[Array[Double]] = for {
+    sample <- set
+  } yield {
+    sampleToData(sample._2)
   }
 
   def newInputArray: Array[Int] = Array.ofDim[Int](inputDimensions)
 
   def newResultArray = Array.ofDim[Double](outputDimensions)
 
-  def compute(input: Array[Double], network: BasicNetwork = network): (Double, Int) = {
+  def compute(input: Array[Double]): (Double, Int) = {
     val result = newResultArray
     network.compute(input, result)
     println("computed = " + result.mkString(" "))
     result.zipWithIndex.maxBy(_._1)
   }
 
-  def trainNetwork(trainingSet: GenSeq[(File, String)]) {
-    val train: MLTrain = new ResilientPropagation(network,
-      new BasicMLDataSet(input(trainingSet).toArray, ideal(trainingSet).toArray))
-    for (i <- 1 to 100) {
+  def trainNetwork(set: GenSeq[(File, String)],
+                   trainingContinuation: Option[TrainingContinuation] = None) = {
+    val trainingSet = set.par
+    val samples: MLDataSet = new BasicMLDataSet(input(trainingSet).toArray, ideal(trainingSet).toArray)
+    val train: MLTrain = new ResilientPropagation(network, samples)
+    trainingContinuation.map(train.resume(_))
+    for (i <- 1 to 500) {
       train.iteration()
       println(i + " " + train.getError)
+      save
     }
+    train.pause()
   }
 
   def testNetwork(testSet: GenSeq[(File, String)]): GenSeq[Boolean] = {
@@ -72,20 +90,36 @@ class TrainNetwork extends NetworkConstants {
         ideal(selected._2) == 1.0
     }
   }
+
+  def save = {
+    org.encog.util.obj.SerializeObject.save(NetworkConstants.networkFile, network)
+    this
+  }
 }
 
-object TrainNetwork extends TrainNetwork with App {
-  val (trainingSet, testSet) = set.splitAt(set.size * 9 / 10)
-  trainNetwork(trainingSet)
-  val testResults = testNetwork(testSet)
-  println("success rate = " + testResults.filter(_ == true).size.toDouble / testResults.size * 100)
-  //  SerializeObject.save(KillCaptcha.networkFile, network)
-  sys.exit()
+object TrainNetwork extends App {
+  new TrainNetwork() {
+    val (trainingSet, testSet) = {
+      val inputSet = set
+      val size = inputSet.size
+//      val size = 100
+      util.Random.shuffle(inputSet).take(size).splitAt(size * 9 / 10)
+    }
+    println("training size " + trainingSet.size)
+    println("test size " + testSet.size)
+    trainNetwork(trainingSet)
+    val testResults = testNetwork(testSet)
+    println("success rate = " + testResults.filter(_ == true).size.toDouble / testResults.size * 100)
+    sys.exit()
+  }
+
+  def load = new TrainNetwork(SerializeObject.load(NetworkConstants.networkFile).asInstanceOf[BasicNetwork])
 }
 
-trait NetworkConstants {
-  val dataDir = "target/data/"
-  val imageDimensions = 15
+object NetworkConstants {
+  val dataDir = "data/"
+  val networkFile = new File("network")
+  val imageDimensions = 10
   val inputDimensions = imageDimensions * imageDimensions
   val outputDimensions = 10
 }

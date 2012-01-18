@@ -1,5 +1,5 @@
 import com.google.common.io.Files
-import java.io.{FileOutputStream, File}
+import java.io.{ByteArrayOutputStream, FileOutputStream, File}
 import unfiltered.util.Browser
 
 class GetCaptcha {
@@ -17,7 +17,10 @@ class GetCaptcha {
   val h = new Http
 }
 
-object GetCaptcha extends GetCaptcha with App with NetworkConstants {
+object GetCaptcha extends GetCaptcha with App {
+
+  import NetworkConstants._
+
   val files = for (i <- 1 to 1000) yield {
     val file: File = new File("captcha" + i + ".png")
     val out: FileOutputStream = new FileOutputStream(file)
@@ -27,9 +30,22 @@ object GetCaptcha extends GetCaptcha with App with NetworkConstants {
   }
   Browser.open(files.head.toURI.toString)
   val answer = readLine()
-  files.foreach{ f =>
-    val answerDataDir: File = new File(f.getParentFile, dataDir + answer)
-    answerDataDir.mkdirs
-    Files.move(f, new File(answerDataDir,  f.getName))
+  files.foreach {
+    f =>
+      val answerDataDir: File = new File(f.getParentFile, dataDir + answer)
+      answerDataDir.mkdirs
+      Files.move(f, new File(answerDataDir, f.getName))
+  }
+}
+
+object TestCaptchas extends App {
+  for (i <- 1 to 20) {
+    new GetCaptcha {
+      val out = new ByteArrayOutputStream()
+      h(r(out))
+      val bytes = out.toByteArray
+      val answer = KillCaptcha.recaptcha(bytes).result
+      Files.write(bytes, new File(answer + ".png"))
+    }
   }
 }
