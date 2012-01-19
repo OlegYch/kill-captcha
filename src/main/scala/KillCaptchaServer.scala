@@ -80,7 +80,7 @@ object KillCaptchaServer extends App {
   new Thread(new Runnable {
     def run() {
       val network = KillCaptcha.network
-      def test: network.TestResults = network.testNetwork(network.set.take(100))
+      def test: network.TestResults = network.testNetwork(util.Random.shuffle(network.set).take(100))
       var lastTestResults = test
       while (true) {
         import dispatch._
@@ -100,6 +100,7 @@ object KillCaptchaServer extends App {
     start()
   }
 
+  """\d""".r
   unfiltered.jetty.Http(Properties.envOrElse("PORT", "8151").toInt)
     .filter(Solver)
     .run {s =>

@@ -65,7 +65,7 @@ class TrainNetwork(val network: BasicNetwork,
   def compute(input: Array[Double]): (Double, Int) = {
     val result = newResultArray
     network.compute(input, result)
-//    println("computed = " + result.mkString(" "))
+    //    println("computed = " + result.mkString(" "))
     result.zipWithIndex.maxBy(_._1)
   }
 
@@ -91,7 +91,7 @@ class TrainNetwork(val network: BasicNetwork,
   def testNetwork(testSet: GenSeq[(File, String)]): TestResults = {
     TestResults(input(testSet).zip(ideal(testSet)).map {
       case (input, ideal) =>
-//        println("ideal = " + ideal.mkString(" "))
+        //        println("ideal = " + ideal.mkString(" "))
         val selected = compute(input)
         ideal(selected._2) == 1.0
     })
@@ -124,10 +124,12 @@ object TestNetwork extends App {
   results.map(t => println("success rate for " + t.input + " =  " + t.results.successRate))
 }
 
-object TrainNetwork extends App {
+object TrainNetwork {
   type Contents = (BasicNetwork, Option[TrainingContinuation])
 
-  new TrainNetwork() {
+  def main(args: Array[String]) {
+    val tn = TrainNetwork.load
+    import tn._
     val (trainingSet, testSet) = {
       val inputSet = set
       val size = inputSet.size
@@ -144,12 +146,16 @@ object TrainNetwork extends App {
       save
       println("success rate = " + testNetwork(testSet).successRate)
     }
-    sys.exit()
   }
 
+
   def load = {
-    val contents = SerializeObject.load(NetworkConstants.networkFile).asInstanceOf[Contents]
-    new TrainNetwork(contents._1, contents._2)
+    try {
+      val contents = SerializeObject.load(NetworkConstants.networkFile).asInstanceOf[Contents]
+      new TrainNetwork(contents._1, contents._2)
+    } catch {
+      case e => new TrainNetwork()
+    }
   }
 }
 
