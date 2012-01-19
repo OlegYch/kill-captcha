@@ -141,6 +141,7 @@ object TrainNetwork extends App {
       println("Iteration = " + iteration)
       iteration += 1
       println("train error = " + trainNetwork(trainingSet))
+      save
       println("success rate = " + testNetwork(testSet).successRate)
     }
     sys.exit()
