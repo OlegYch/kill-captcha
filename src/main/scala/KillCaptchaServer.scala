@@ -83,6 +83,8 @@ object KillCaptchaServer extends App {
       while (true) {
         network.trainNetwork(network.set, iterations = 1)
         Thread.sleep(1000)
+        import dispatch._
+        new Http()(url("http://blooming-journey-5754.herokuapp.com").as_str)
       }
     }
   }) {
