@@ -82,12 +82,14 @@ object KillCaptchaServer extends App {
       val network = KillCaptcha.network
       while (true) {
         network.trainNetwork(network.set, iterations = 1)
+        Thread.sleep(1000)
       }
     }
   }) {
     setDaemon(true)
     start()
   }
+
   unfiltered.jetty.Http(Properties.envOrElse("PORT", "8151").toInt)
     .filter(Solver)
     .run {s =>

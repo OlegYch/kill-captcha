@@ -70,8 +70,7 @@ object ImageUtils {
     val h = image.getHeight
     val neww = math.floor(w * cos + h * sin).toInt
     val newh = math.floor(h * cos + w * sin).toInt
-    val gc = getDefaultConfiguration
-    val result = gc.createCompatibleImage(neww, newh, Transparency.TRANSLUCENT)
+    val result = new BufferedImage(neww, newh, Transparency.OPAQUE)
     withGraphics(result) {g =>
       g.translate((neww - w) / 2, (newh - h) / 2)
       g.rotate(angle, w / 2, h / 2)
@@ -85,18 +84,11 @@ object ImageUtils {
     val h = image.getHeight
     val neww = width
     val newh = height
-    val gc = getDefaultConfiguration
-    val result = gc.createCompatibleImage(neww, newh, Transparency.TRANSLUCENT)
+    val result: BufferedImage = new BufferedImage(neww, newh, Transparency.OPAQUE)
     withGraphics(result) {g =>
       g.scale(neww.toDouble / w, newh.toDouble / h)
       g.drawRenderedImage(image, null);
     }
     result
-  }
-
-  def getDefaultConfiguration = {
-    val ge = GraphicsEnvironment.getLocalGraphicsEnvironment
-    val gd = ge.getDefaultScreenDevice
-    gd.getDefaultConfiguration
   }
 }

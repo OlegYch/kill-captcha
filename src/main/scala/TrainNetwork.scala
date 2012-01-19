@@ -72,16 +72,18 @@ class TrainNetwork(val network: BasicNetwork,
   def trainNetwork(set: GenSeq[(File, String)],
                    trainingContinuation: Option[TrainingContinuation] = defTrainingContinuation, 
                    iterations: Int = 500) = {
-    val trainingSet = set.par
-    val samples: MLDataSet = new BasicMLDataSet(input(trainingSet).toArray, ideal(trainingSet).toArray)
-    val train: MLTrain = new ResilientPropagation(network, samples)
-    trainingContinuation.map(train.resume(_))
-    for (i <- 1 to iterations) {
-      train.iteration()
-      println(i + " " + train.getError)
-      save
+    if (set.size > 0) {
+      val trainingSet = set.par
+      val samples: MLDataSet = new BasicMLDataSet(input(trainingSet).toArray, ideal(trainingSet).toArray)
+      val train: MLTrain = new ResilientPropagation(network, samples)
+      trainingContinuation.map(train.resume(_))
+      for (i <- 1 to iterations) {
+        train.iteration()
+        println(i + " " + train.getError)
+        save
+      }
+      defTrainingContinuation = Some(train.pause())
     }
-    defTrainingContinuation = Some(train.pause())
     defTrainingContinuation
   }
 
