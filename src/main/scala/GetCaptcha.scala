@@ -17,6 +17,30 @@ class GetCaptcha {
   val h = new Http
 }
 
+object CaptchasToSolve {
+  def resultDir(uid: String) = new File(NetworkConstants.dataDir, uid)
+
+  def get(uid: String) = {
+    val c = new GetCaptcha
+    import c._
+    for (i <- 1 to 10) yield {
+      val out = new ByteArrayOutputStream()
+      h(r(out))
+      val bytes = out.toByteArray
+      resultDir(uid).mkdirs()
+      val file = new File(resultDir(uid), i + ".png")
+      Files.write(bytes, file)
+      file
+    }
+  }
+
+  def solve(uid: String, answer: String) {
+    val result = resultDir(uid)
+    Files.move(result, new File(NetworkConstants.dataDir, answer))
+    SplitImage.main(null)
+  }
+}
+
 object GetCaptcha extends GetCaptcha with App {
 
   import NetworkConstants._

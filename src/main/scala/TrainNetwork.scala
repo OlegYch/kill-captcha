@@ -12,7 +12,8 @@ import org.encog.neural.networks.training.propagation.resilient.ResilientPropaga
 import org.encog.neural.networks.training.propagation.TrainingContinuation
 import org.encog.util.obj.SerializeObject
 
-class TrainNetwork(val network: BasicNetwork) {
+class TrainNetwork(val network: BasicNetwork,
+                   var defTrainingContinuation: Option[TrainingContinuation] = None) {
   def this(dim: Int = NetworkConstants.inputDimensions, outDim: Int = NetworkConstants.outputDimensions) {
     this (new BasicNetwork() {
       addLayer(new BasicLayer(dim))
@@ -69,17 +70,19 @@ class TrainNetwork(val network: BasicNetwork) {
   }
 
   def trainNetwork(set: GenSeq[(File, String)],
-                   trainingContinuation: Option[TrainingContinuation] = None) = {
+                   trainingContinuation: Option[TrainingContinuation] = defTrainingContinuation, 
+                   iterations: Int = 500) = {
     val trainingSet = set.par
     val samples: MLDataSet = new BasicMLDataSet(input(trainingSet).toArray, ideal(trainingSet).toArray)
     val train: MLTrain = new ResilientPropagation(network, samples)
     trainingContinuation.map(train.resume(_))
-    for (i <- 1 to 500) {
+    for (i <- 1 to iterations) {
       train.iteration()
       println(i + " " + train.getError)
       save
     }
-    train.pause()
+    defTrainingContinuation = Some(train.pause())
+    defTrainingContinuation
   }
 
   def testNetwork(testSet: GenSeq[(File, String)]): GenSeq[Boolean] = {
@@ -91,13 +94,20 @@ class TrainNetwork(val network: BasicNetwork) {
     }
   }
 
+
+  def contents: TrainNetwork.Contents = {
+    (network, defTrainingContinuation)
+  }
+
   def save = {
-    org.encog.util.obj.SerializeObject.save(NetworkConstants.networkFile, network)
+    org.encog.util.obj.SerializeObject.save(NetworkConstants.networkFile, contents)
     this
   }
 }
 
 object TrainNetwork extends App {
+  type Contents = (BasicNetwork, Option[TrainingContinuation])
+
   new TrainNetwork() {
     val (trainingSet, testSet) = {
       val inputSet = set
@@ -113,7 +123,10 @@ object TrainNetwork extends App {
     sys.exit()
   }
 
-  def load = new TrainNetwork(SerializeObject.load(NetworkConstants.networkFile).asInstanceOf[BasicNetwork])
+  def load = {
+    val contents = SerializeObject.load(NetworkConstants.networkFile).asInstanceOf[Contents]
+    new TrainNetwork(contents._1, contents._2)
+  }
 }
 
 object NetworkConstants {
