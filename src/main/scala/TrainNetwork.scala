@@ -70,7 +70,7 @@ class TrainNetwork(val network: BasicNetwork,
   }
 
   def trainNetwork(set: GenSeq[(File, String)],
-                   trainingContinuation: Option[TrainingContinuation] = defTrainingContinuation, 
+                   trainingContinuation: Option[TrainingContinuation] = defTrainingContinuation,
                    iterations: Int = 500) = {
     if (set.size > 0) {
       val trainingSet = set.par
@@ -87,13 +87,17 @@ class TrainNetwork(val network: BasicNetwork,
     defTrainingContinuation
   }
 
-  def testNetwork(testSet: GenSeq[(File, String)]): GenSeq[Boolean] = {
-    input(testSet).zip(ideal(testSet)).map {
+  case class TestResults(testResults: GenSeq[Boolean]) {
+    val successRate = testResults.filter(_ == true).size.toDouble / testResults.size * 100
+  }
+
+  def testNetwork(testSet: GenSeq[(File, String)]): TestResults = {
+    TestResults(input(testSet).zip(ideal(testSet)).map {
       case (input, ideal) =>
         println("ideal = " + ideal.mkString(" "))
         val selected = compute(input)
         ideal(selected._2) == 1.0
-    }
+    })
   }
 
 
@@ -107,6 +111,24 @@ class TrainNetwork(val network: BasicNetwork,
   }
 }
 
+object TestNetwork extends App {
+  type Contents = (BasicNetwork, Option[TrainingContinuation])
+
+  val tn = TrainNetwork.load
+
+  import tn._
+
+  val results = for (char <- '0' to '9') yield {
+    new {
+      val results = testNetwork(set
+        .filter {case (f, answer) => answer == char.toString}
+      )
+      val input = char
+    }
+  }
+  results.map(t => println("success rate for " + t.input + " =  " + t.results.successRate))
+}
+
 object TrainNetwork extends App {
   type Contents = (BasicNetwork, Option[TrainingContinuation])
 
@@ -114,14 +136,13 @@ object TrainNetwork extends App {
     val (trainingSet, testSet) = {
       val inputSet = set
       val size = inputSet.size
-//      val size = 100
+      //      val size = 100
       util.Random.shuffle(inputSet).take(size).splitAt(size * 9 / 10)
     }
     println("training size " + trainingSet.size)
     println("test size " + testSet.size)
     trainNetwork(trainingSet)
-    val testResults = testNetwork(testSet)
-    println("success rate = " + testResults.filter(_ == true).size.toDouble / testResults.size * 100)
+    println(testNetwork(testSet))
     sys.exit()
   }
 

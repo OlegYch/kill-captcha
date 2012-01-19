@@ -54,11 +54,10 @@ object GetCaptcha extends GetCaptcha with App {
   }
   Browser.open(files.head.toURI.toString)
   val answer = readLine()
-  files.foreach {
-    f =>
-      val answerDataDir: File = new File(f.getParentFile, dataDir + answer)
-      answerDataDir.mkdirs
-      Files.move(f, new File(answerDataDir, f.getName))
+  files.foreach {f =>
+    val answerDataDir: File = new File(f.getParentFile, dataDir + answer)
+    answerDataDir.mkdirs
+    Files.move(f, new File(answerDataDir, f.getName))
   }
 }
 
