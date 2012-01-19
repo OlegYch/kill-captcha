@@ -65,26 +65,23 @@ class TrainNetwork(val network: BasicNetwork,
   def compute(input: Array[Double]): (Double, Int) = {
     val result = newResultArray
     network.compute(input, result)
-    println("computed = " + result.mkString(" "))
+//    println("computed = " + result.mkString(" "))
     result.zipWithIndex.maxBy(_._1)
   }
 
   def trainNetwork(set: GenSeq[(File, String)],
-                   trainingContinuation: Option[TrainingContinuation] = defTrainingContinuation,
-                   iterations: Int = 500) = {
+                   trainingContinuation: Option[TrainingContinuation] = defTrainingContinuation) = {
     if (set.size > 0) {
       val trainingSet = set.par
       val samples: MLDataSet = new BasicMLDataSet(input(trainingSet).toArray, ideal(trainingSet).toArray)
       val train: MLTrain = new ResilientPropagation(network, samples)
       trainingContinuation.map(train.resume(_))
-      for (i <- 1 to iterations) {
-        train.iteration()
-        println(i + " " + train.getError)
-        save
-      }
+      train.iteration()
       defTrainingContinuation = Some(train.pause())
+      train.getError
+    } else {
+      1.0
     }
-    defTrainingContinuation
   }
 
   case class TestResults(testResults: GenSeq[Boolean]) {
@@ -94,7 +91,7 @@ class TrainNetwork(val network: BasicNetwork,
   def testNetwork(testSet: GenSeq[(File, String)]): TestResults = {
     TestResults(input(testSet).zip(ideal(testSet)).map {
       case (input, ideal) =>
-        println("ideal = " + ideal.mkString(" "))
+//        println("ideal = " + ideal.mkString(" "))
         val selected = compute(input)
         ideal(selected._2) == 1.0
     })
@@ -139,8 +136,13 @@ object TrainNetwork extends App {
     }
     println("training size " + trainingSet.size)
     println("test size " + testSet.size)
-    trainNetwork(trainingSet)
-    println(testNetwork(testSet))
+    var iteration = 0
+    while (true) {
+      println("Iteration = " + iteration)
+      iteration += 1
+      println("train error = " + trainNetwork(trainingSet))
+      println("success rate = " + testNetwork(testSet).successRate)
+    }
     sys.exit()
   }
 

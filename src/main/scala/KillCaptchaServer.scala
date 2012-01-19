@@ -1,5 +1,8 @@
 import collection.immutable.IndexedSeq
 import com.google.common.io.Files
+import dispatch.futures.DefaultFuture
+import dispatch.url._
+import dispatch.{url, Http}
 import java.io.File
 import java.lang.{Thread, String}
 import java.util.UUID
@@ -81,10 +84,11 @@ object KillCaptchaServer extends App {
     def run() {
       val network = KillCaptcha.network
       while (true) {
-        network.trainNetwork(network.set, iterations = 1)
-        Thread.sleep(1000)
         import dispatch._
-        new Http()(url("http://blooming-journey-5754.herokuapp.com").as_str)
+        import dispatch.futures._
+        DefaultFuture.future(new Http()(url("http://blooming-journey-5754.herokuapp.com").as_str))
+        println("train error = " + network.trainNetwork(network.set))
+        Thread.sleep(10000)
       }
     }
   }) {
