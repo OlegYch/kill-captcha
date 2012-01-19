@@ -118,13 +118,11 @@ object TestNetwork extends App {
 
   import tn._
 
-  val results = for (char <- '0' to '9') yield {
-    new {
-      val results = testNetwork(set
-        .filter {case (f, answer) => answer == char.toString}
-      )
-      val input = char
-    }
+  val results = for (char <- '0' to '9') yield new {
+    val results = testNetwork(set
+      .filter {case (f, answer) => answer == char.toString}
+    )
+    val input = char
   }
   results.map(t => println("success rate for " + t.input + " =  " + t.results.successRate))
 }
