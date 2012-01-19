@@ -109,10 +109,7 @@ class TrainNetwork(val network: BasicNetwork,
 }
 
 object TestNetwork extends App {
-  type Contents = (BasicNetwork, Option[TrainingContinuation])
-
   val tn = TrainNetwork.load
-
   import tn._
 
   val results = for (char <- '0' to '9') yield new {
