@@ -1,1 +1,1 @@
-worker: target/start KillCaptchaServer
+web: target/start KillCaptchaServer

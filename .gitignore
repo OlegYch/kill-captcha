@@ -4,6 +4,7 @@
 .idea/misc.xml
 .idea/ant.xml
 **/*.iml
-**/target/*
-target/*
+**/target
+target
+project/project
 data
