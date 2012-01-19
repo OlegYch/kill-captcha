@@ -1,4 +1,5 @@
 import com.google.common.io.Files
+import dispatch.thread.ThreadSafeHttpClient
 import java.io.{ByteArrayOutputStream, FileOutputStream, File}
 import unfiltered.util.Browser
 
@@ -14,7 +15,7 @@ class GetCaptcha {
     r.>>>(out)
   }
 
-  val h = new Http
+  val h = new Http //with thread.Safety no need since backend cant concurrent sessions
 }
 
 object CaptchasToSolve {
@@ -46,13 +47,15 @@ object GetCaptcha extends GetCaptcha with App {
   import NetworkConstants._
 
   val files = for (i <- 1 to 1000) yield {
-    val file: File = new File("captcha" + i + ".png")
-    val out: FileOutputStream = new FileOutputStream(file)
+    val file = new File("captcha" + i + ".png")
+    val out = new FileOutputStream(file)
     h(r(out))
     out.close()
     file
   }
+
   Browser.open(files.head.toURI.toString)
+  println("Enter anwer:")
   val answer = readLine()
   files.foreach {f =>
     val answerDataDir: File = new File(f.getParentFile, dataDir + answer)

@@ -40,8 +40,8 @@ object SplitImage extends App {
 //        println(splitImage.lines.map(_.sum))
 //        println(splitImage.diffs)
 //        println(splitImage.euristicSplits)
-        ImageIO.write(splitImage.writeSplits(splitImage.evenSplits), "png",
-          new File(c.getAbsolutePath.replace(".png", "_.png")))
+//        ImageIO.write(splitImage.writeSplits(splitImage.evenSplits), "png",
+//          new File(c.getAbsolutePath.replace(".png", "_.png")))
         val numbers: Seq[BufferedImage] = splitCaptcha(splitImage)
         numbers.zip(captcha).foreach {
           case (image, char) =>
