@@ -22,3 +22,5 @@ libraryDependencies += "org.encog" % "encog-core" % "3.0.0"
 libraryDependencies += "net.databinder" %% "unfiltered-jetty" % "0.5.3"
 
 libraryDependencies += "net.databinder" %% "unfiltered-uploads" % "0.5.3"
+
+libraryDependencies += "org.scalatest" %% "scalatest" % "1.6.1" % "test"

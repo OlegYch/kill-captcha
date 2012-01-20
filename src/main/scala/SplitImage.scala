@@ -4,7 +4,9 @@ import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
 
 object SplitImage extends App {
+
   import NetworkConstants._
+
   implicit def withSafeFiles(f: File) = new {
     def listFilesSafe: Seq[File] = for {
       children <- Option(f.listFiles()).toSeq
@@ -18,14 +20,14 @@ object SplitImage extends App {
     }
   }
 
-  def splitCaptcha(splitImage:ImageSplitter): Seq[BufferedImage] = {
+  def splitCaptcha(splitImage: ImageSplitter): Seq[BufferedImage] = {
     val numbers = splitImage.splitImages(splitImage.evenSplits).map {image =>
       val splitter = new ImageSplitter(ImageUtils.rotateImage(image)) {
         override val numberOfSplits = 1
       }
-      ImageUtils.scaleImage(ImageUtils.rotateImage(
-        splitter.splitImages(splitter.evenSplits)(0), angle = -math.Pi / 2),
-        width = imageDimensions, height = imageDimensions)
+      ImageUtils.scaleImage(
+        ImageUtils.rotateImage(splitter.splitImages(splitter.evenSplits)(0), angle = -math.Pi / 2)
+        , width = imageDimensions, height = imageDimensions)
     }
     numbers
   }
@@ -36,12 +38,12 @@ object SplitImage extends App {
     f.listFilesSafe.par.filterNot(_.getName.contains("_")).map {c =>
       println("processing " + c)
       try {
-        val splitImage = new ImageSplitter(c)
-//        println(splitImage.lines.map(_.sum))
-//        println(splitImage.diffs)
-//        println(splitImage.euristicSplits)
-//        ImageIO.write(splitImage.writeSplits(splitImage.evenSplits), "png",
-//          new File(c.getAbsolutePath.replace(".png", "_.png")))
+        val splitImage = new ImageSplitter(ImageUtils.convertToBW(ImageUtils.readImage(c)))
+        //        println(splitImage.lines.map(_.sum))
+        //        println(splitImage.diffs)
+        //        println(splitImage.euristicSplits)
+        //        ImageIO.write(splitImage.writeSplits(splitImage.evenSplits), "png",
+        //          new File(c.getAbsolutePath.replace(".png", "_.png")))
         val numbers: Seq[BufferedImage] = splitCaptcha(splitImage)
         numbers.zip(captcha).foreach {
           case (image, char) =>

@@ -3,6 +3,7 @@ import java.io.File
 import java.lang.String
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
+import org.encog.engine.network.activation.ActivationTANH
 import org.encog.ml.data.basic.BasicMLDataSet
 import org.encog.ml.data.MLDataSet
 import org.encog.ml.train.MLTrain
@@ -17,7 +18,7 @@ class TrainNetwork(val network: BasicNetwork,
   def this(dim: Int = NetworkConstants.inputDimensions, outDim: Int = NetworkConstants.outputDimensions) {
     this (new BasicNetwork() {
       addLayer(new BasicLayer(dim))
-      addLayer(new BasicLayer(dim * 2))
+      addLayer(new BasicLayer(new ActivationTANH(), false, dim * 2))
       addLayer(new BasicLayer(outDim))
       getStructure.finalizeStructure()
       reset()

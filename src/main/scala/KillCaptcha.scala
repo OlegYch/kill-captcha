@@ -14,7 +14,7 @@ object KillCaptcha {
   case class CaptchaResult(result: String, confidence: Double)
 
   def recaptcha(bytes: Array[Byte]): CaptchaResult = {
-    val captcha = ImageIO.read(ByteStreams.newInputStreamSupplier(bytes).getInput)
+    val captcha = ImageUtils.readImage(ByteStreams.newInputStreamSupplier(bytes).getInput)
     println("size = " + bytes.size)
     val recognizedNumbers: Seq[(Double, Int)] = SplitImage.splitCaptcha(new ImageSplitter(captcha)).map(c =>
       network.compute(network.readImageInput(c)))

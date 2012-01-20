@@ -1,10 +1,8 @@
 import java.awt.image.BufferedImage
-import java.io.File
+import java.io.{InputStream, File}
 import javax.imageio.ImageIO
 
 class ImageSplitter(val image: BufferedImage) {
-  def this(input: File) = this (ImageIO.read(input))
-
   val numberOfSplits = 4
   val lineWidth = 1
 
@@ -91,4 +89,15 @@ object ImageUtils {
     }
     result
   }
+
+  def convertToBW(image: BufferedImage) = {
+    val blackAndWhiteImage = new BufferedImage(image.getWidth(null), image.getHeight(null),
+      BufferedImage.TYPE_BYTE_BINARY);
+    withGraphics(blackAndWhiteImage)(_.drawImage(image, 0, 0, null))
+    blackAndWhiteImage
+  }
+
+  def readImage(f:InputStream) = ImageIO.read(f)
+
+  def readImage(f:File) = ImageIO.read(f)
 }
