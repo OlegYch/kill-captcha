@@ -3,6 +3,10 @@ import java.io.{InputStream, File}
 import javax.imageio.ImageIO
 
 class ImageSplitter(val image: BufferedImage) {
+  def this(f: File) = this (ImageUtils.convertToBW(ImageUtils.readImage(f)))
+
+  def this(f: InputStream) = this (ImageUtils.convertToBW(ImageUtils.readImage(f)))
+
   val numberOfSplits = 4
   val lineWidth = 1
 
@@ -97,7 +101,7 @@ object ImageUtils {
     blackAndWhiteImage
   }
 
-  def readImage(f:InputStream) = ImageIO.read(f)
+  def readImage(f: InputStream) = ImageIO.read(f)
 
-  def readImage(f:File) = ImageIO.read(f)
+  def readImage(f: File) = ImageIO.read(f)
 }

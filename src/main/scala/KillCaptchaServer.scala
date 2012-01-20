@@ -77,30 +77,8 @@ object KillCaptchaServer extends App {
     )
   }
 
-  new Thread(new Runnable {
-    def run() {
-      val network = KillCaptcha.network
-      def test: network.TestResults = network.testNetwork(util.Random.shuffle(network.set).take(100))
-      var lastTestResults = test
-      while (true) {
-        import dispatch._
-        import dispatch.futures._
-        DefaultFuture.future(new Http()(url("http://blooming-journey-5754.herokuapp.com").as_str))
-        println("train error = " + network.trainNetwork(network.set))
-        val testResults = test
-        if (testResults.successRate > lastTestResults.successRate){
-          lastTestResults = testResults
-          network.save
-        }
-        Thread.sleep(10000)
-      }
-    }
-  }) {
-    setDaemon(true)
-    start()
-  }
+//  new AutoTrainer().start()
 
-  """\d""".r
   unfiltered.jetty.Http(Properties.envOrElse("PORT", "8151").toInt)
     .filter(Solver)
     .run {s =>

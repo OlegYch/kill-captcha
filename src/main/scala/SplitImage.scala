@@ -38,7 +38,7 @@ object SplitImage extends App {
     f.listFilesSafe.par.filterNot(_.getName.contains("_")).map {c =>
       println("processing " + c)
       try {
-        val splitImage = new ImageSplitter(ImageUtils.convertToBW(ImageUtils.readImage(c)))
+        val splitImage = new ImageSplitter(c)
         //        println(splitImage.lines.map(_.sum))
         //        println(splitImage.diffs)
         //        println(splitImage.euristicSplits)
