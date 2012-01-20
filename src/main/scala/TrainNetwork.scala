@@ -29,9 +29,12 @@ class TrainNetwork(val network: BasicNetwork,
 
   import SplitImage.withSafeFiles
 
-  def set: Seq[(File, String)] = new File(NetworkConstants.dataDir).listFilesSafe
-    .filter(_.getName.length == 1).flatMap {
-    f => f.listFilesSafe.map(image => (image, f.getName))
+  def set: Seq[(File, String)] = {
+      val samplesForNumbers = new File(NetworkConstants.dataDir)
+        .listFilesSafe.filter(_.getName.length == 1).map(_.listFilesSafe)
+    val minimumSamplesCount = samplesForNumbers.map(_.size).min
+    samplesForNumbers.flatMap(_.take(minimumSamplesCount))
+      .map(sampleFile => (sampleFile, sampleFile.getParentFile.getName))
   }
 
   def readImageInput(image: BufferedImage): Array[Double] = {
